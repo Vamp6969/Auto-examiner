@@ -38,7 +38,7 @@ def _run_test(solution_code: str, assertion: str) -> tuple[bool, bool, bool]:
         return result.returncode == 0, False, False
     except subprocess.TimeoutExpired:
         return False, True, False
-    except Exception:
+    except subprocess.SubprocessError:
         return False, False, True
 
 
@@ -47,7 +47,6 @@ class AutoExaminerEnvironment(Environment):
         super().__init__()
         self._difficulty = 1
         self._topic = TOPICS[0]
-        self._topic_variant = 0
         self._step_count = 0
         self._episode_id = ""
         self._total_episodes = 0
@@ -63,7 +62,6 @@ class AutoExaminerEnvironment(Environment):
         if difficulty is not None:
             self._difficulty = max(1, min(5, int(difficulty)))
         self._topic = TOPICS[self._difficulty - 1]
-        self._topic_variant = 0
         self._step_count = 0
         self._episode_id = episode_id or str(uuid.uuid4())
         self._total_episodes += 1
@@ -82,6 +80,19 @@ class AutoExaminerEnvironment(Environment):
         self._step_count += 1
 
         test_cases = generate_test_cases(action.challenge, action.solution)
+        if not test_cases:
+            return AutoExaminerObservation(
+                done=False,
+                reward=-1.0,
+                difficulty_level=self._difficulty,
+                topic=self._topic,
+                score=0.0,
+                tests_passed=0,
+                total_tests=0,
+                feedback="Test generation failed; no tests available.",
+                challenge_valid=bool(action.challenge and action.solution),
+                new_difficulty=self._difficulty,
+            )
         total_tests = len(test_cases)
 
         tests_passed = 0
@@ -114,16 +125,13 @@ class AutoExaminerEnvironment(Environment):
 
         if score >= 0.8:
             new_difficulty = min(5, self._difficulty + 1)
-            self._topic_variant = 0
             new_topic = TOPICS[new_difficulty - 1]
         elif score < 0.5:
             new_difficulty = max(1, self._difficulty - 1)
-            self._topic_variant = 0
             new_topic = TOPICS[new_difficulty - 1]
         else:
             new_difficulty = self._difficulty
-            self._topic_variant = (self._topic_variant + 1) % len(TOPICS)
-            new_topic = TOPICS[self._topic_variant]
+            new_topic = self._topic  # keep same topic, difficulty unchanged
 
         self._difficulty = new_difficulty
         self._topic = new_topic
