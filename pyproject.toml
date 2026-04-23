@@ -1,0 +1,19 @@
+[project]
+name = "auto-examiner"
+version = "1.0.0"
+description = "Self-improving coding challenge environment for RL agents"
+requires-python = ">=3.11"
+dependencies = [
+    "openenv-core>=0.2.3",
+    "fastapi>=0.100.0",
+    "uvicorn>=0.22.0",
+    "openai>=2.0.0",
+    "pydantic>=2.0",
+]
+
+[project.scripts]
+server = "server.app:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
