@@ -1,0 +1,4 @@
+name: auto-examiner
+version: "1.0.0"
+description: "Self-improving coding challenge environment for RL agents"
+tags: ["openenv", "self-improvement", "auto-curriculum", "reinforcement-learning"]
