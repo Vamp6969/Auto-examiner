@@ -86,7 +86,7 @@ def main():
     base_url = os.getenv("ENV_BASE_URL", "http://localhost:7860")
     llm_client = OpenAI(
         api_key=os.getenv("HF_TOKEN", ""),
-        base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
+        base_url=os.getenv("API_BASE_URL", "https://router.huggingface.co/featherless-ai/v1"),
     )
 
     all_results = []

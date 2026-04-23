@@ -7,7 +7,7 @@ def generate_test_cases(challenge: str, solution_code: str) -> list[tuple[str, s
     try:
         client = OpenAI(
             api_key=os.getenv("HF_TOKEN", ""),
-            base_url=os.getenv("API_BASE_URL", "https://api.openai.com/v1"),
+            base_url=os.getenv("API_BASE_URL", "https://router.huggingface.co/featherless-ai/v1"),
         )
         prompt = (
             f"Given this coding challenge:\n{challenge}\n\n"
