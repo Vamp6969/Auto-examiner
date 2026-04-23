@@ -7,7 +7,8 @@ class AutoExaminerAction(Action):
 
 
 class AutoExaminerObservation(Observation):
-    done: bool = False
+    # done and reward are inherited from Observation base (done=False, reward=None|float)
+    # We set reward default to 0.0 so observations are always numeric
     reward: float = 0.0
     difficulty_level: int = 1
     topic: str = ""
@@ -20,8 +21,8 @@ class AutoExaminerObservation(Observation):
 
 
 class AutoExaminerState(State):
+    # step_count is inherited from State base (int=0, ge=0) — not re-declared to keep constraint
     episode_id: str = ""
-    step_count: int = 0
     current_difficulty: int = 1
     current_topic: str = ""
     total_episodes: int = 0
