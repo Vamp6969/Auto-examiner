@@ -35,8 +35,11 @@ def get_llm_response(client: OpenAI, difficulty: int, topic: str) -> dict:
     if content.startswith("```"):
         lines = content.split("```")
         content = lines[1] if len(lines) > 1 else "{}"
-        if content.startswith("json"):
-            content = content[4:]
+        # Strip any language identifier (e.g., json, python, JSON)
+        if "\n" in content:
+            first_line, rest = content.split("\n", 1)
+            if first_line.strip() and not first_line.strip().startswith("{"):
+                content = rest
     return json.loads(content.strip())
 
 

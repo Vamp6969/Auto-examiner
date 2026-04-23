@@ -19,7 +19,7 @@ class AutoExaminerEnv(
         obs_data = payload.get("observation", {})
         observation = AutoExaminerObservation(
             done=payload.get("done", False),
-            reward=payload.get("reward") or 0.0,
+            reward=payload.get("reward", 0.0),
             difficulty_level=obs_data.get("difficulty_level", 1),
             topic=obs_data.get("topic", ""),
             score=obs_data.get("score", 0.0),
@@ -31,7 +31,7 @@ class AutoExaminerEnv(
         )
         return StepResult(
             observation=observation,
-            reward=payload.get("reward"),
+            reward=payload.get("reward", 0.0),
             done=payload.get("done", False),
         )
 
