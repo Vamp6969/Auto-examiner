@@ -1,3 +1,12 @@
+---
+title: Auto Examiner
+emoji: 🎯
+colorFrom: purple
+colorTo: blue
+sdk: docker
+pinned: false
+---
+
 # Auto-Examiner
 
 A self-improving reinforcement learning environment built on [OpenEnv](https://github.com/openenv/openenv). The agent must both **write** a coding challenge and **solve** it in a single step. Succeed and the problems get harder. Struggle and they get easier.
