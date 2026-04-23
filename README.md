@@ -114,7 +114,7 @@ uv sync
 
 ```bash
 export HF_TOKEN="hf_..."                                          # API key
-export API_BASE_URL="https://api-inference.huggingface.co/v1"    # LLM endpoint
+export API_BASE_URL="https://router.huggingface.co/featherless-ai/v1"  # LLM endpoint
 export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"                    # Model name
 export ENV_BASE_URL="http://localhost:7860"                       # Server URL (for inference.py)
 ```
@@ -177,7 +177,7 @@ with env_client.sync() as env:
 ## Docker
 
 ```bash
-docker build -f server/Dockerfile -t auto-examiner .
+docker build -t auto-examiner .
 docker run -p 7860:7860 \
   -e HF_TOKEN=$HF_TOKEN \
   -e API_BASE_URL=$API_BASE_URL \
@@ -191,6 +191,7 @@ docker run -p 7860:7860 \
 
 ```
 auto-examiner/
+├── Dockerfile             # Root Dockerfile for HF Space / Docker builds
 ├── models.py              # Action / Observation / State definitions
 ├── client.py              # Typed WebSocket client (AutoExaminerEnv)
 ├── inference.py           # 3-episode baseline runner
@@ -202,7 +203,7 @@ auto-examiner/
     ├── environment.py     # AutoExaminerEnvironment — reset / step / state
     ├── rewards.py         # 4 independent reward functions
     ├── test_generator.py  # LLM-based test case generator with fallback
-    └── Dockerfile
+    └── Dockerfile         # Mirror of root Dockerfile
 ```
 
 ---
