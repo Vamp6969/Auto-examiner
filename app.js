@@ -2,13 +2,20 @@
 const HF_BASE = 'https://vamppog-auto-examiner.hf.space';
 const LLM_BASE = 'https://router.huggingface.co/featherless-ai/v1/chat/completions';
 const LLM_MODEL = 'Qwen/Qwen2.5-72B-Instruct';
-const HF_TOKEN = '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';
 const TYPEWRITER_MS = 10;
 const STEP_DELAY_MS = 3000;
 const MAX_HISTORY = 20;
+const HF_TOKEN_KEY = 'ax:hf_token';
 
 // ============== STATE ==============
-let API_KEY = HF_TOKEN;
+let API_KEY = localStorage.getItem(HF_TOKEN_KEY) || '';
+if (!API_KEY) {
+  const entered = window.prompt('Enter your HuggingFace token (hf_...) — required to call the LLM:');
+  if (entered && entered.trim().startsWith('hf_')) {
+    API_KEY = entered.trim();
+    localStorage.setItem(HF_TOKEN_KEY, API_KEY);
+  }
+}
 let running = false;
 let stopRequested = false;
 let totalEpisodes = 0;
