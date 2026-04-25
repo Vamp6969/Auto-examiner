@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AUTO-EXAMINER ::: LIVE</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet" />
+<link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+<link href="styles.css" rel="stylesheet" />
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div class="title">AUTO-EXAMINER</div>
+    <div class="stat">
+      <div class="stat-label">DIFFICULTY</div>
+      <div class="stat-value" id="hdrDifficulty">—</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">EPISODES</div>
+      <div class="stat-value purple" id="hdrEpisodes">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">AVG REWARD</div>
+      <div class="stat-value green" id="hdrAvg">0.00</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- LEFT COLUMN -->
+    <div class="left-col">
+      <div class="panel">
+        <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+        <div class="panel-header">
+          <div>
+            <span class="panel-title">⟢ CHALLENGE</span>
+            <span class="topic-chip" id="topicChip">—</span>
+          </div>
+          <span class="status-pill idle" id="challengeStatus"><span class="status-dot"></span>WAITING</span>
+        </div>
+        <div class="challenge-text" id="challengeText"></div>
+      </div>
+
+      <div class="panel">
+        <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+        <div class="panel-header">
+          <div><span class="panel-title">⟢ SOLUTION</span></div>
+          <span class="panel-meta" id="solutionMeta">PYTHON</span>
+        </div>
+        <div class="solution-wrap">
+          <pre><code class="language-python" id="solutionCode">/* solution will appear here */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div class="right-col">
+      <div class="panel">
+        <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+        <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+        <div class="panel-header">
+          <div><span class="panel-title">⟢ TEST RESULTS</span></div>
+          <span class="panel-meta" id="testsMeta">0 / 0</span>
+        </div>
+        <div class="tests-list" id="testsList"></div>
+      </div>
+
+      <div class="reward-card">
+        <div class="reward-box">
+          <span class="panel-corner tl"></span><span class="panel-corner br"></span>
+          <div class="reward-label">⟢ REWARD</div>
+          <div class="reward-value" id="rewardValue">—</div>
+          <div class="reward-sub" id="rewardSub">awaiting episode</div>
+        </div>
+        <div class="progression-box">
+          <span class="panel-corner tr"></span><span class="panel-corner bl"></span>
+          <div class="reward-label">⟢ DIFFICULTY PATH</div>
+          <div class="progression" id="progression">
+            <div class="prog-step" data-level="1">1</div>
+            <span class="prog-arrow">›</span>
+            <div class="prog-step" data-level="2">2</div>
+            <span class="prog-arrow">›</span>
+            <div class="prog-step" data-level="3">3</div>
+            <span class="prog-arrow">›</span>
+            <div class="prog-step" data-level="4">4</div>
+            <span class="prog-arrow">›</span>
+            <div class="prog-step" data-level="5">5</div>
+          </div>
+          <div class="reward-sub" id="progSub" style="margin-top: 14px;">level: idle</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button class="btn" id="startBtn">▶ START</button>
+        <button class="btn danger" id="stopBtn" disabled>■ STOP</button>
+        <button class="btn btn-logs" id="viewLogsBtn">
+          ☰ LOGS
+          <span class="logs-badge" id="logsBadge">0</span>
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- BOTTOM CHART -->
+  <div class="chart-panel">
+    <span class="panel-corner tl"></span><span class="panel-corner tr"></span>
+    <span class="panel-corner bl"></span><span class="panel-corner br"></span>
+    <div class="chart-header">
+      <span class="panel-title">⟢ REWARD HISTORY · LAST 20</span>
+      <span class="status-pill" id="globalStatus"><span class="status-dot"></span>READY</span>
+    </div>
+    <div class="chart-axis" id="chartAxis">
+      <div class="chart-zero-line" id="zeroLine"><span class="chart-zero-label">0</span></div>
+    </div>
+    <div class="chart-tooltip" id="chartTooltip"></div>
+  </div>
+
+</div>
+
+<!-- LOGS SLIDE-OVER -->
+<div class="logs-backdrop" id="logsBackdrop"></div>
+<div class="logs-drawer" id="logsDrawer">
+  <div class="logs-drawer-header">
+    <div class="logs-drawer-title-wrap">
+      <div class="logs-drawer-dots">
+        <span class="logs-drawer-dot r"></span>
+        <span class="logs-drawer-dot y"></span>
+        <span class="logs-drawer-dot g"></span>
+      </div>
+      <span class="logs-drawer-title">⟢ SESSION LOG</span>
+    </div>
+    <div class="logs-drawer-actions">
+      <button class="logs-icon-btn close" id="closeLogsBtn" title="Close">✕</button>
+    </div>
+  </div>
+
+  <div class="logs-drawer-meta">
+    <span><span class="cyan" id="sessionIdLabel">session_loading...</span></span>
+    <span><span id="sessionLineCount">0</span> LINES</span>
+  </div>
+
+  <div class="logs-action-bar">
+    <button class="log-action-btn clear" id="clearCurrentBtn">⌫ CLEAR CURRENT</button>
+    <button class="log-action-btn" id="downloadCurrentBtn">⤓ DOWNLOAD SESSION</button>
+    <button class="log-action-btn alt" id="downloadAllBtn">⤓ DOWNLOAD ALL</button>
+  </div>
+
+  <div class="logs-sessions-wrap">
+    <div class="logs-sessions-label">SESSIONS</div>
+    <div class="logs-sessions-list" id="sessionsList"></div>
+  </div>
+
+  <div class="terminal-body" id="terminalBody"></div>
+</div>
+
+<!-- Vendor scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+
+<!-- App scripts (load order: app first for globals & helpers, then modules) -->
+<script src="logger.js"></script>
+<script src="api.js"></script>
+<script src="chart.js"></script>
+<script src="app.js"></script>
+
+</body>
+</html>

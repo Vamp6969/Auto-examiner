@@ -9,29 +9,41 @@ pinned: false
 
 # Auto-Examiner
 
-A self-improving reinforcement learning environment built on [OpenEnv](https://github.com/openenv/openenv). The agent must both **write** a coding challenge and **solve** it in a single step. Succeed and the problems get harder. Struggle and they get easier.
+A self-improving reinforcement-learning environment built on [OpenEnv](https://github.com/openenv/openenv), plus a live cyberpunk-styled web dashboard that drives an LLM agent through it in real time. The agent must both **write** a coding challenge and **solve** it. Succeed and the problems get harder. Struggle and they get easier.
+
+> **Live demo**: [huggingface.co/spaces/Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner) · **Code**: [github.com/Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner)
+
+---
+
+## Highlights
+
+- **Self-improving curriculum** — difficulty adapts to performance every step (≥0.8 → up, <0.5 → down)
+- **LLM agent loop** — the model generates challenges *and* solutions; the env auto-generates 5 pytest assertions and runs each in a sandboxed subprocess
+- **Live web dashboard** (`index.html`) — typewriter challenge, syntax-highlighted solution, animated test results, color-tiered reward chart, session-persistent terminal log, and difficulty path indicator
+- **Multi-session log archive** — last 10 sessions persisted in `localStorage`, switchable, individually downloadable, deletable
+- **Deployed end-to-end** — FastAPI server + Docker image + HuggingFace Space + GitHub repo
 
 ---
 
 ## How It Works
 
 ```
-Agent → (challenge, solution) → Environment
-                                    │
-                          LLM generates test cases
-                                    │
-                          Runs solution in subprocess
-                                    │
-                          Scores + adjusts difficulty
-                                    │
+Agent (LLM) → (challenge, solution) → Environment
+                                           │
+                                LLM generates 5 test cases
+                                           │
+                              Runs solution in subprocess (3s timeout)
+                                           │
+                              Scores + adjusts difficulty
+                                           │
 Environment → (score, reward, new_difficulty) → Agent
 ```
 
-1. The environment sends the agent a `difficulty_level` (1–5) and a `topic` hint
-2. The agent generates a `challenge` (problem description) and a `solution` (Python code)
-3. An LLM generates up to 5 pytest-style assertions for that challenge
-4. Each assertion is executed against the solution in a sandboxed subprocess (3 s timeout)
-5. The agent receives feedback: score, reward, and the next difficulty level
+1. The environment sends the agent a `difficulty_level` (1–5) and a `topic`
+2. The agent generates a `challenge` and a Python `solution`
+3. An LLM generates up to 5 pytest-style `assert` statements for that challenge
+4. Each assertion runs against the solution in a sandboxed subprocess (3 s timeout)
+5. The agent receives a score, reward, and updated difficulty for the next step
 
 Episodes end after **5 steps** or when the agent achieves a **perfect score (1.0)**.
 
@@ -49,31 +61,7 @@ Episodes end after **5 steps** or when the agent achieves a **perfect score (1.0
 
 ---
 
-## Action Space
-
-| Field | Type | Description |
-|---|---|---|
-| `challenge` | `str` | The coding problem the agent wrote |
-| `solution` | `str` | Python code that solves the challenge |
-
-## Observation Space
-
-| Field | Type | Description |
-|---|---|---|
-| `difficulty_level` | `int` | Current difficulty (1–5) |
-| `topic` | `str` | Topic hint for challenge generation |
-| `score` | `float` | Fraction of tests passed (0.0–1.0) |
-| `tests_passed` | `int` | Number of passing test assertions |
-| `total_tests` | `int` | Total assertions generated |
-| `feedback` | `str` | Human-readable result summary |
-| `challenge_valid` | `bool` | Whether challenge + solution were non-empty |
-| `new_difficulty` | `int` | Difficulty for the next step |
-| `done` | `bool` | Whether the episode has ended |
-| `reward` | `float` | Total reward for this step |
-
----
-
-## Reward Functions
+## Reward Function
 
 Four independent signals combined and clamped to **[−1.0, 2.0]**:
 
@@ -81,10 +69,12 @@ Four independent signals combined and clamped to **[−1.0, 2.0]**:
 |---|---|---|
 | Correctness | [0, 1] | `tests_passed / total_tests` |
 | Difficulty multiplier | [0, 2] | Scales correctness by `1 + level/5` — harder problems pay more |
-| Format compliance | [−0.2, 0.1] | Penalizes empty or missing `def` in solution |
+| Format compliance | [−0.2, 0.1] | Penalizes empty input or solutions missing `def` |
 | Timeout penalty | [−0.3, 0] | −0.3 for timeout, −0.2 for crash |
 
 A perfect solution at difficulty 5 yields a reward of **2.0**. An empty submission yields **−1.0**.
+
+The dashboard additionally applies a client-side reward override `score × (1 + currentDifficulty / 5) + 0.1` to correct for backend stale-difficulty when escalating mid-loop.
 
 ---
 
@@ -94,63 +84,151 @@ A perfect solution at difficulty 5 yields a reward of **2.0**. An empty submissi
 |---|---|
 | ≥ 0.8 | Difficulty +1 (max 5) |
 | < 0.5 | Difficulty −1 (min 1) |
-| 0.5 – 0.8 | Same difficulty, same topic |
+| 0.5 – 0.8 | Same difficulty |
+
+The dashboard mirrors this client-side and passes the new difficulty to `/reset` so the env tracks correctly across episodes.
+
+---
+
+## Action / Observation / State
+
+**Action**
+
+| Field | Type | Description |
+|---|---|---|
+| `challenge` | `str` | The coding problem the agent wrote |
+| `solution` | `str` | Python code that solves the challenge |
+
+**Observation**
+
+| Field | Type | Description |
+|---|---|---|
+| `difficulty_level` | `int` | Current difficulty (1–5) |
+| `topic` | `str` | Topic hint |
+| `score` | `float` | Fraction of tests passed |
+| `tests_passed` / `total_tests` | `int` | Pass counts |
+| `feedback` | `str` | Human-readable result |
+| `challenge_valid` | `bool` | Both fields non-empty |
+| `new_difficulty` | `int` | Next-step difficulty |
+| `done` | `bool` | Episode termination |
+| `reward` | `float` | Total reward |
+
+**State**: `episode_id`, `step_count`, `current_difficulty`, `current_topic`, `total_episodes`, `avg_reward`.
+
+---
+
+## The Web Dashboard
+
+A vanilla-JS, no-framework single-page app at the project root that drives the live HF Space.
+
+### Features
+
+- **Cyberpunk visual style** — Orbitron + JetBrains Mono fonts, animated grid + scanline overlay, glowing cyan/purple/magenta gradients on a deep blue background
+- **Top bar** — `AUTO-EXAMINER` title with live difficulty number, episode counter, average reward
+- **Challenge panel** — typewriter animation (10 ms / char) with topic chip and live status pill
+- **Solution panel** — Prism.js syntax highlighting (Python), line count
+- **Test results panel** — green ✓ / red ✗ items animate in one-by-one
+- **Reward + Difficulty Path cards** — big color-tiered reward number (green ≥1.0 / yellow ≥0.5 / red <0.5), 1→2→3→4→5 progression dots showing the agent's journey
+- **Reward history bar chart**
+  - Last 20 episodes
+  - Bars scaled by reward (max = 2.0 → 100%); negatives extend below the zero line
+  - Color tiers: bright green (≥1.5), cyan (1.0–1.5), yellow (0.5–1.0), red (<0.5), magenta (negative)
+  - Inline white reward value on each bar
+  - Hover tooltip: episode #, difficulty, score, reward, **challenge text**
+- **START / STOP** buttons — runs episodes in a loop with 3 s spacing
+- **Persistent session log** (slide-over drawer)
+  - **localStorage-backed** — last 10 sessions retained across page reloads
+  - Auto-generated session IDs: `session_YYYY-MM-DD_HH-mm-ss`
+  - Color-coded: dim cyan timestamps, green `>>>` outgoing, white `<<<` incoming, yellow `>>>` events, red `!!!` errors
+  - Per-line fade-in animation, auto-scroll to bottom
+  - **Session list** — clickable chips to switch view between current and past sessions
+  - Per-session **delete** (×) button
+  - **Action buttons**: Clear Current · Download Session · Download All Sessions
+  - **LIVE** badge on the active session chip
+  - Pulse animation + magenta unread badge on the LOGS button when activity arrives while drawer is closed
+
+### File structure
+
+```
+index.html      Main structure (semantic markup only)
+styles.css      All styling, animations, theme tokens
+app.js          Config, helpers, episode loop, init
+logger.js       Session log with localStorage persistence
+api.js          HF Space + LLM API calls
+chart.js        Reward history bar chart + tooltip
+```
+
+### Theme tokens
+
+| Hex | Use |
+|---|---|
+| `#05071a` | Page background |
+| `#0d1230` / `#131a40` | Panels |
+| `#00f0ff` | Primary cyan accent |
+| `#a855f7` | Purple secondary |
+| `#ff2bd6` | Magenta highlight |
+| `#10ffa3` | Pass / high reward |
+| `#fbbf24` | Mid reward |
+| `#ff4d6d` | Fail / low reward |
+| `#e6f1ff` / `#6b7aa8` | Text / dim text |
+
+Fonts: **Orbitron** (titles, stats, buttons), **JetBrains Mono** (body, code, logs).
 
 ---
 
 ## Setup
 
-**Requirements:** Python 3.11+, a HuggingFace or OpenAI-compatible API key.
+**Requirements:** Python 3.11+, a HuggingFace token (or any OpenAI-compatible API key).
 
 ```bash
-# Install dependencies
 pip install openenv-core openai fastapi uvicorn
-
-# Or with uv
+# or
 uv sync
 ```
 
 **Environment variables:**
 
 ```bash
-export HF_TOKEN="hf_..."                                          # API key
-export API_BASE_URL="https://router.huggingface.co/featherless-ai/v1"  # LLM endpoint
-export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"                    # Model name
-export ENV_BASE_URL="http://localhost:7860"                       # Server URL (for inference.py)
+export HF_TOKEN="hf_..."
+export API_BASE_URL="https://router.huggingface.co/featherless-ai/v1"
+export MODEL_NAME="Qwen/Qwen2.5-72B-Instruct"
+export ENV_BASE_URL="http://localhost:7860"
 ```
 
 ---
 
-## Running Locally
+## Running
 
 **Start the server:**
 ```bash
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-**Quick smoke test (no LLM needed):**
+**Open the dashboard:**
 ```bash
-# Reset the environment
-curl -s -X POST http://localhost:7860/reset \
-  -H "Content-Type: application/json" -d '{}' | python3 -m json.tool
+python3 -m http.server 8000
+# visit http://localhost:8000/
+```
 
-# Submit a challenge + solution
+(The dashboard hits the deployed HF Space by default; edit `HF_BASE` in `app.js` to point at your local server.)
+
+**Run the 3-episode CLI baseline:**
+```bash
+python inference.py
+```
+
+**Quick smoke test (no LLM):**
+```bash
+curl -s -X POST http://localhost:7860/reset -H "Content-Type: application/json" -d '{}' | python3 -m json.tool
 curl -s -X POST http://localhost:7860/step \
   -H "Content-Type: application/json" \
   -d '{"action": {"challenge": "Write a function that returns 42", "solution": "def answer():\n    return 42"}}' \
   | python3 -m json.tool
 ```
 
-**Run the 3-episode baseline (requires LLM env vars):**
-```bash
-python inference.py
-```
-
-This runs episodes at difficulties 1, 3, and 5 and prints a score table.
-
 ---
 
-## Using the Client
+## Using the Python Client
 
 ```python
 from client import AutoExaminerEnv
@@ -169,7 +247,7 @@ with env_client.sync() as env:
         )
         result = env.step(action)
         obs = result.observation
-        print(f"Score: {obs.score:.2f} | Reward: {obs.reward:.4f} | Next difficulty: {obs.new_difficulty}")
+        print(f"Score: {obs.score:.2f} | Reward: {obs.reward:.4f} | Next: {obs.new_difficulty}")
 ```
 
 ---
@@ -185,25 +263,33 @@ docker run -p 7860:7860 \
   auto-examiner
 ```
 
+The root `Dockerfile` is what HuggingFace Spaces uses; `server/Dockerfile` is a mirror for backend-only deployments.
+
 ---
 
 ## Project Structure
 
 ```
 auto-examiner/
-├── Dockerfile             # Root Dockerfile for HF Space / Docker builds
-├── models.py              # Action / Observation / State definitions
-├── client.py              # Typed WebSocket client (AutoExaminerEnv)
-├── inference.py           # 3-episode baseline runner
-├── openenv.yaml           # OpenEnv manifest
+├── Dockerfile             Root Dockerfile for HF Space / Docker
+├── index.html             Live dashboard structure
+├── styles.css             Dashboard styling
+├── app.js                 Main dashboard logic
+├── logger.js              Persistent session log
+├── api.js                 HF Space + LLM client
+├── chart.js               Reward history chart
+├── models.py              Pydantic Action / Observation / State
+├── client.py              Typed EnvClient wrapper
+├── inference.py           CLI 3-episode baseline runner
+├── openenv.yaml           OpenEnv manifest
 ├── pyproject.toml
 ├── uv.lock
 └── server/
-    ├── app.py             # FastAPI entrypoint (create_fastapi_app)
-    ├── environment.py     # AutoExaminerEnvironment — reset / step / state
-    ├── rewards.py         # 4 independent reward functions
-    ├── test_generator.py  # LLM-based test case generator with fallback
-    └── Dockerfile         # Mirror of root Dockerfile
+    ├── app.py             FastAPI entrypoint via create_fastapi_app
+    ├── environment.py     AutoExaminerEnvironment — reset / step / state
+    ├── rewards.py         4 independent reward functions
+    ├── test_generator.py  LLM test generator with hardcoded fallback
+    └── Dockerfile         Mirror of root Dockerfile
 ```
 
 ---
@@ -219,12 +305,34 @@ auto-examiner/
 
 ---
 
+## Tests
+
+```bash
+.venv/bin/pytest tests/ -v
+```
+
+40 tests across `models`, `rewards`, `test_generator`, and `environment` suites. All pass.
+
+```bash
+openenv validate .
+# [OK] : Ready for multi-mode deployment
+```
+
+---
+
 ## Baseline Scores
 
 | Difficulty | Avg Score | Avg Reward | Steps |
 |---|---|---|---|
-| 1 | TBD | TBD | ≤5 |
-| 3 | TBD | TBD | ≤5 |
-| 5 | TBD | TBD | ≤5 |
+| 1 | 1.00 | 1.30 | 1 |
+| 3 | 1.00 | 1.70 | 1 |
+| 5 | 1.00 | 2.00 | 1 |
 
-Run `python inference.py` to populate these values.
+(Run `python inference.py` to refresh — Qwen2.5-72B-Instruct via featherless-ai aces every difficulty in a single step.)
+
+---
+
+## Links
+
+- **HuggingFace Space**: [Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner)
+- **GitHub**: [Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner)
