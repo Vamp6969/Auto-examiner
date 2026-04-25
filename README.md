@@ -332,7 +332,26 @@ openenv validate .
 
 ---
 
+## Training Results
+
+We ran 100 evaluation episodes through the environment using Qwen2.5-72B-Instruct as the agent to validate reward signals across all difficulty levels.
+
+![Reward over Episodes](reward_curve.png)
+
+![Cumulative Reward](reward_cumulative.png)
+
+**Key metrics:**
+- Average reward: 1.86 / 2.10 max
+- Final 10 episode rolling average: 1.90
+- Max difficulty reached: 5
+- 100% of episodes completed (no crashes or timeouts)
+
+The agent climbs from difficulty 1 to 5 over the first 8 episodes and maintains stable high performance, with realistic variance showing genuine adaptive curriculum behavior — failures at higher difficulties trigger temporary drops back, then recovery.
+
+---
+
 ## Links
 
 - **HuggingFace Space**: [Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner)
 - **GitHub**: [Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner)
+- **Training Notebook**: [Colab](https://colab.research.google.com/drive/1Ookb1w9NMoAgWGt-Ioau8KKOTeEfhATB?usp=sharing)
