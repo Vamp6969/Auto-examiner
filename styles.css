@@ -25,6 +25,32 @@ html, body {
   overflow: hidden;
 }
 
+/* ========== GLOBAL SCROLLBAR THEME ========== */
+* { scrollbar-width: thin; scrollbar-color: rgba(0, 240, 255, 0.45) rgba(5, 7, 26, 0.4); }
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+*::-webkit-scrollbar-track {
+  background: linear-gradient(180deg, rgba(5, 7, 26, 0.6), rgba(13, 18, 48, 0.4));
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.08);
+}
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--cyan), var(--purple));
+  border-radius: 6px;
+  border: 2px solid rgba(5, 7, 26, 0.8);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+  transition: all 0.2s;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5fffff, var(--magenta));
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.7);
+}
+*::-webkit-scrollbar-corner { background: transparent; }
+*::-webkit-scrollbar-button { display: none; }
+
 body {
   background:
     radial-gradient(ellipse at 20% 0%, rgba(168, 85, 247, 0.18), transparent 50%),
@@ -233,9 +259,6 @@ body::after {
   overflow-x: auto;
   padding: 4px 2px 8px;
 }
-.logs-sessions-list::-webkit-scrollbar { height: 6px; }
-.logs-sessions-list::-webkit-scrollbar-track { background: transparent; }
-.logs-sessions-list::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.25); border-radius: 3px; }
 
 .session-chip {
   flex-shrink: 0;
@@ -336,9 +359,6 @@ body::after {
   background: #000;
   background-image: radial-gradient(ellipse at top, rgba(0, 240, 255, 0.05), transparent 60%);
 }
-.terminal-body::-webkit-scrollbar { width: 8px; }
-.terminal-body::-webkit-scrollbar-track { background: #0a0a0a; }
-.terminal-body::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 4px; }
 
 .log-line {
   opacity: 0;
@@ -467,6 +487,34 @@ body::after {
 .stat-value.purple { color: var(--purple); text-shadow: 0 0 20px var(--purple); }
 .stat-value.green { color: var(--green); text-shadow: 0 0 20px var(--green); }
 
+.stat-pill {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.18), rgba(0, 240, 255, 0.12));
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  border-radius: 16px;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.3), inset 0 0 6px rgba(168, 85, 247, 0.08);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: all 0.25s;
+}
+.stat-pill::before {
+  content: '⟢';
+  margin-right: 6px;
+  color: var(--cyan);
+  text-shadow: 0 0 6px var(--cyan);
+}
+
 /* ========== MAIN GRID ========== */
 .main {
   display: grid;
@@ -546,8 +594,6 @@ body::after {
   white-space: pre-wrap;
   word-wrap: break-word;
 }
-.challenge-text::-webkit-scrollbar { width: 6px; }
-.challenge-text::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
 .cursor {
   display: inline-block;
@@ -590,8 +636,6 @@ body::after {
   gap: 6px;
   padding-right: 4px;
 }
-.tests-list::-webkit-scrollbar { width: 6px; }
-.tests-list::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 3px; }
 
 .test-item {
   display: flex;
@@ -847,6 +891,35 @@ body::after {
 .chart-tooltip .tt-key { color: var(--text-dim); }
 .chart-tooltip .tt-val { color: var(--cyan); font-weight: 700; }
 .chart-tooltip .tt-challenge .tt-val { display: block; color: var(--text); font-weight: 400; line-height: 1.45; margin-top: 3px; }
+
+.chart-tooltip .tt-topic-row {
+  justify-content: center;
+  margin-bottom: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+}
+.chart-tooltip .tt-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.2), rgba(0, 240, 255, 0.12));
+  border: 1px solid var(--purple);
+  color: var(--purple);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  border-radius: 12px;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.3);
+  white-space: nowrap;
+}
+.chart-tooltip .tt-pill::before {
+  content: '⟢';
+  margin-right: 5px;
+  color: var(--cyan);
+  text-shadow: 0 0 4px var(--cyan);
+}
 
 /* ========== STATUS PILL ========== */
 .status-pill {

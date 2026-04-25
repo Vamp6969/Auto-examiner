@@ -117,7 +117,9 @@ async function runEpisode() {
   const difficulty = obs.difficulty_level || currentDifficulty;
   const topic = obs.topic || 'basic_functions';
   setDifficulty(difficulty);
-  $('topicChip').textContent = topic.replace(/_/g, ' ');
+  const prettyTopic = topic.replace(/_/g, ' ');
+  $('topicChip').textContent = prettyTopic;
+  $('hdrTopic').textContent = prettyTopic;
 
   log(`Topic: ${topic}`, 'in');
 
@@ -197,7 +199,7 @@ async function runEpisode() {
 
   totalEpisodes++;
   $('hdrEpisodes').textContent = totalEpisodes;
-  pushHistory(reward, difficulty, score, gen.challenge);
+  pushHistory(reward, difficulty, score, gen.challenge, topic);
 
   if (newDiff > currentDifficulty) {
     log(`Difficulty escalated: ${currentDifficulty} → ${newDiff}`, 'event');

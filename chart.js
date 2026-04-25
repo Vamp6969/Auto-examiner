@@ -1,12 +1,13 @@
 // ============== REWARD HISTORY CHART ==============
 let rewardHistory = [];
 
-function pushHistory(reward, difficulty, score, challenge) {
+function pushHistory(reward, difficulty, score, challenge, topic) {
   rewardHistory.push({
     reward,
     difficulty,
     score,
     challenge: challenge || '',
+    topic: topic || '',
     episode: totalEpisodes
   });
   if (rewardHistory.length > MAX_HISTORY) rewardHistory.shift();
@@ -79,7 +80,9 @@ function truncate(s, n) {
 
 function showTooltip(e, entry) {
   const tip = document.getElementById('chartTooltip');
+  const prettyTopic = (entry.topic || '').replace(/_/g, ' ');
   tip.innerHTML = `
+    <div class="tt-row tt-topic-row"><span class="tt-pill">${escapeHtml(prettyTopic || 'unknown')}</span></div>
     <div class="tt-row"><span class="tt-key">EPISODE</span><span class="tt-val">#${entry.episode}</span></div>
     <div class="tt-row"><span class="tt-key">DIFFICULTY</span><span class="tt-val">${entry.difficulty}</span></div>
     <div class="tt-row"><span class="tt-key">SCORE</span><span class="tt-val">${(entry.score ?? 0).toFixed(2)}</span></div>
