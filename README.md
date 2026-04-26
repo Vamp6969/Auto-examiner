@@ -375,3 +375,4 @@ The agent climbs from difficulty 1 to 5 over the first ~5 episodes and maintains
 - **GitHub**: [Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner)
 - **Training Notebook**: [Colab](https://colab.research.google.com/drive/1Ookb1w9NMoAgWGt-Ioau8KKOTeEfhATB?usp=sharing)
 - **Blog Post**: [Blog.md](Blog.md) — the story behind Auto-Examiner
+- **Pitch Deck**: [Auto-Examiner-Deck.pdf](./Auto-Examiner-Deck.pdf)
