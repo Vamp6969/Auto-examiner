@@ -72,7 +72,7 @@ Four independent signals combined and clamped to **[−1.0, 2.0]**:
 | Format compliance | [−0.2, 0.1] | Penalizes empty input or solutions missing `def` |
 | Timeout penalty | [−0.3, 0] | −0.3 for timeout, −0.2 for crash |
 
-A perfect solution at difficulty 5 yields a reward of **2.0**. An empty submission yields **−1.0**.
+A perfect solution at difficulty 5 yields a reward of **2.10** (correctness × difficulty multiplier + format bonus). An empty submission yields **−1.0**.
 
 The dashboard additionally applies a client-side reward override `score × (1 + currentDifficulty / 5) + 0.1` to correct for backend stale-difficulty when escalating mid-loop.
 
