@@ -121,6 +121,8 @@ The dashboard mirrors this client-side and passes the new difficulty to `/reset`
 
 A vanilla-JS, no-framework single-page app at the project root that drives the live HF Space.
 
+![Dashboard in action](running-example.png)
+
 ### Features
 
 - **Cyberpunk visual style** — Orbitron + JetBrains Mono fonts, animated grid + scanline overlay, glowing cyan/purple/magenta gradients on a deep blue background
