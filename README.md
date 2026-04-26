@@ -11,7 +11,7 @@ pinned: false
 
 A self-improving reinforcement-learning environment built on [OpenEnv](https://github.com/openenv/openenv), plus a live cyberpunk-styled web dashboard that drives an LLM agent through it in real time. The agent must both **write** a coding challenge and **solve** it. Succeed and the problems get harder. Struggle and they get easier.
 
-> **Live demo**: [huggingface.co/spaces/Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner) · **Code**: [github.com/Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner)
+> **Live demo**: [huggingface.co/spaces/Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner) · **Code**: [github.com/Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner) · **Colab notebook**: [open in Colab](https://colab.research.google.com/drive/1Ookb1w9NMoAgWGt-Ioau8KKOTeEfhATB?usp=sharing)
 
 ---
 
@@ -336,7 +336,7 @@ openenv validate .
 
 ## Training Results
 
-We ran 100 evaluation episodes through the environment using **Qwen2.5-72B-Instruct** as the agent, then a short GRPO fine-tuning pass to confirm the signals are policy-gradient-friendly.
+We ran 100 evaluation episodes through the environment using **Qwen2.5-72B-Instruct** as the agent, then a short GRPO fine-tuning pass to confirm the signals are policy-gradient-friendly. Reproduce everything in the [Colab notebook](https://colab.research.google.com/drive/1Ookb1w9NMoAgWGt-Ioau8KKOTeEfhATB?usp=sharing).
 
 ### Evaluation: reward, difficulty, score distribution
 

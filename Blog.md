@@ -60,7 +60,7 @@ Everything sums up and gets clamped to `[-1.0, 2.0]`. A perfect solution at diff
 
 ## What 100 episodes told us
 
-We ran 100 evaluation episodes with `Qwen2.5-72B-Instruct` driving the agent. This wasn't a fine-tuning run — we weren't updating model weights. The point was to validate that the environment actually works the way we designed it across the full difficulty range. Does the difficulty climb correctly? Does the reward scale properly? Does the grader catch failures honestly?
+We ran 100 evaluation episodes with `Qwen2.5-72B-Instruct` driving the agent (full reproducer in the [Colab notebook](https://colab.research.google.com/drive/1Ookb1w9NMoAgWGt-Ioau8KKOTeEfhATB?usp=sharing)). This wasn't a fine-tuning run — we weren't updating model weights. The point was to validate that the environment actually works the way we designed it across the full difficulty range. Does the difficulty climb correctly? Does the reward scale properly? Does the grader catch failures honestly?
 
 Here's what we got:
 
@@ -99,5 +99,6 @@ That's the direction we're excited about.
 
 **Live demo:** [huggingface.co/spaces/Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner)
 **Code:** [github.com/Vamp6969/Auto-examiner](https://github.com/Vamp6969/Auto-examiner)
+**Colab notebook:** [open in Colab](https://colab.research.google.com/drive/1Ookb1w9NMoAgWGt-Ioau8KKOTeEfhATB?usp=sharing)
 
 *Team Vamp — Tushar A, Padmashree, Pranav.*
