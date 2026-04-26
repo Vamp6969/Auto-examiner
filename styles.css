@@ -102,6 +102,123 @@ body::after {
   padding: 14px;
 }
 
+/* ========== HF TOKEN MODAL ========== */
+.token-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(5, 7, 26, 0.85);
+  backdrop-filter: blur(6px);
+  z-index: 9000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.token-backdrop.open { opacity: 1; pointer-events: auto; }
+
+.token-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.96);
+  width: min(520px, 92vw);
+  background: linear-gradient(135deg, var(--bg-panel) 0%, var(--bg-panel-2) 100%);
+  border: 1px solid var(--cyan);
+  border-radius: 10px;
+  box-shadow: 0 0 60px rgba(0, 240, 255, 0.35), 0 0 120px rgba(168, 85, 247, 0.25);
+  z-index: 9500;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s, transform 0.25s cubic-bezier(0.4, 1.5, 0.6, 1);
+}
+.token-modal.open {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate(-50%, -50%) scale(1);
+}
+
+.token-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(90deg, rgba(0, 240, 255, 0.06), transparent);
+}
+.token-modal-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 4px;
+  color: var(--cyan);
+  text-shadow: 0 0 10px var(--cyan);
+}
+
+.token-modal-body { padding: 22px; }
+.token-modal-desc {
+  color: var(--text);
+  font-size: 13px;
+  line-height: 1.65;
+  margin-bottom: 10px;
+}
+.token-accent { color: var(--cyan); font-weight: 700; }
+.token-modal-desc code, .token-modal-hint code {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 1px 5px;
+  border-radius: 3px;
+}
+.token-modal-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 18px;
+}
+.token-modal-hint a {
+  color: var(--purple);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--purple);
+}
+.token-modal-hint a:hover { color: var(--cyan); border-bottom-color: var(--cyan); }
+
+.token-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.55);
+  border: 1px solid var(--border-strong);
+  color: var(--text);
+  padding: 13px 16px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  border-radius: 5px;
+  outline: none;
+  letter-spacing: 1px;
+  transition: all 0.15s;
+}
+.token-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.45), inset 0 0 8px rgba(0, 240, 255, 0.1);
+}
+.token-input::placeholder { color: var(--text-dim); }
+
+.token-error {
+  min-height: 18px;
+  margin: 6px 2px 12px;
+  font-size: 11px;
+  color: var(--red);
+  letter-spacing: 0.5px;
+}
+
+.token-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.btn.token-submit {
+  flex: 0 0 auto;
+  padding: 12px 32px;
+  font-size: 12px;
+}
+
 /* ========== LOG SLIDE-OVER ========== */
 .logs-backdrop {
   position: fixed;

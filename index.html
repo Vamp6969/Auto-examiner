@@ -129,6 +129,35 @@
 
 </div>
 
+<!-- ============================================================ -->
+<!-- HF TOKEN MODAL — themed first-run prompt for the API key     -->
+<!-- ============================================================ -->
+<div class="token-backdrop" id="tokenBackdrop"></div>
+<div class="token-modal" id="tokenModal">
+  <span class="panel-corner tl"></span>
+  <span class="panel-corner tr"></span>
+  <span class="panel-corner bl"></span>
+  <span class="panel-corner br"></span>
+  <div class="token-modal-header">
+    <span class="token-modal-title">⟢ AUTHORIZE TERMINAL</span>
+    <span class="status-pill running"><span class="status-dot"></span>AUTH REQUIRED</span>
+  </div>
+  <div class="token-modal-body">
+    <p class="token-modal-desc">
+      Enter your <span class="token-accent">HuggingFace</span> access token to power the agent.
+      The token is stored only in this browser's <code>localStorage</code> — it never leaves your machine.
+    </p>
+    <p class="token-modal-hint">
+      Get one at <a href="https://huggingface.co/settings/tokens" target="_blank" rel="noopener">huggingface.co/settings/tokens</a> · expects format <code>hf_…</code>
+    </p>
+    <input type="password" id="tokenInput" class="token-input" placeholder="hf_..." autocomplete="off" spellcheck="false" />
+    <div class="token-error" id="tokenError"></div>
+    <div class="token-modal-actions">
+      <button class="btn token-submit" id="tokenSubmitBtn">⟢ INITIATE</button>
+    </div>
+  </div>
+</div>
+
 <!-- LOGS SLIDE-OVER -->
 <div class="logs-backdrop" id="logsBackdrop"></div>
 <div class="logs-drawer" id="logsDrawer">

@@ -1,3 +1,14 @@
+"""Core OpenEnv environment for Auto-Examiner.
+
+The agent submits a (challenge, solution) pair every step. We:
+  1. Ask an LLM (test_generator) to produce up to 5 pytest assertions.
+  2. Run each assertion against the solution in a sandboxed subprocess.
+  3. Score the solution and combine four reward signals (rewards.py).
+  4. Adjust difficulty for the next step based on the score.
+
+Episodes terminate after 5 steps or on a perfect score (1.0).
+"""
+
 import subprocess
 import uuid
 from typing import Any, Optional
@@ -8,6 +19,7 @@ from models import AutoExaminerAction, AutoExaminerObservation, AutoExaminerStat
 from server.rewards import compute_total_reward
 from server.test_generator import generate_test_cases
 
+# Topic catalog — index i corresponds to difficulty level i+1.
 TOPICS = [
     "basic_functions",
     "algorithms",
@@ -16,6 +28,8 @@ TOPICS = [
     "complex_algorithms",
 ]
 
+# Human-readable hint included in the reset observation's feedback field —
+# mostly for the agent's prompt context.
 TOPIC_PROMPTS = {
     "basic_functions": "Write a simple Python function (e.g. sum a list, check even/odd, reverse a string)",
     "algorithms": "Implement a classic algorithm (e.g. binary search, bubble sort, fibonacci)",
@@ -26,7 +40,12 @@ TOPIC_PROMPTS = {
 
 
 def _run_test(solution_code: str, assertion: str) -> tuple[bool, bool, bool]:
-    """Run one assertion against solution. Returns (passed, timed_out, crashed)."""
+    """Run one assertion against `solution_code` in a fresh Python subprocess.
+
+    Returns a (passed, timed_out, crashed) tuple. Subprocess isolation guards
+    the server against agent code that might import dangerous modules, mutate
+    state, or run forever (3-second hard cap).
+    """
     code = solution_code + "\n\n" + assertion
     try:
         result = subprocess.run(
@@ -35,22 +54,26 @@ def _run_test(solution_code: str, assertion: str) -> tuple[bool, bool, bool]:
             capture_output=True,
             text=True,
         )
+        # Non-zero return code means the assertion failed (raised AssertionError).
         return result.returncode == 0, False, False
     except subprocess.TimeoutExpired:
-        return False, True, False
+        return False, True, False     # timed_out
     except subprocess.SubprocessError:
-        return False, False, True
+        return False, False, True     # any other subprocess failure -> crashed
 
 
 class AutoExaminerEnvironment(Environment):
+    """OpenEnv environment driving the auto-curriculum loop."""
+
     def __init__(self):
         super().__init__()
+        # Per-environment-instance state (resets on container restart, not on /reset)
         self._difficulty = 1
         self._topic = TOPICS[0]
         self._step_count = 0
         self._episode_id = ""
         self._total_episodes = 0
-        self._reward_history: list[float] = []
+        self._reward_history: list[float] = []   # for avg_reward in state
 
     def reset(
         self,
@@ -59,7 +82,14 @@ class AutoExaminerEnvironment(Environment):
         difficulty: Optional[int] = None,
         **kwargs: Any,
     ) -> AutoExaminerObservation:
+        """Start a new episode.
+
+        Optional `difficulty` lets the client (e.g. the dashboard) pin the level
+        explicitly — useful since the server may not retain difficulty across
+        independent /reset calls.
+        """
         if difficulty is not None:
+            # Clamp into the supported [1, 5] range
             self._difficulty = max(1, min(5, int(difficulty)))
         self._topic = TOPICS[self._difficulty - 1]
         self._step_count = 0
@@ -77,10 +107,21 @@ class AutoExaminerEnvironment(Environment):
         timeout_s: Optional[float] = None,
         **kwargs: Any,
     ) -> AutoExaminerObservation:
+        """Grade one (challenge, solution) submission and adjust difficulty.
+
+        Flow:
+          - Ask LLM for assertions
+          - Run each assertion in a subprocess
+          - Compute reward from four signals
+          - Apply difficulty escalation rule (>=0.8 up, <0.5 down, else same)
+          - Return done=True if step_count >= 5 OR a perfect score
+        """
         self._step_count += 1
 
+        # Generate test cases — falls back internally if LLM call fails.
         test_cases = generate_test_cases(action.challenge, action.solution)
         if not test_cases:
+            # Defensive: should never happen given the fallback, but guard anyway.
             return AutoExaminerObservation(
                 done=False,
                 reward=-1.0,
@@ -95,11 +136,11 @@ class AutoExaminerEnvironment(Environment):
             )
         total_tests = len(test_cases)
 
+        # Run each assertion. For empty submissions skip execution entirely
+        # — they can't pass anything and we don't want to waste subprocess overhead.
         tests_passed = 0
         timed_out = False
         crashed = False
-
-        # Skip test execution for empty submissions
         if action.challenge and action.solution:
             for assertion, _ in test_cases:
                 passed, to, cr = _run_test(action.solution, assertion)
@@ -112,6 +153,7 @@ class AutoExaminerEnvironment(Environment):
 
         score = tests_passed / total_tests if total_tests > 0 else 0.0
 
+        # Combine the four reward signals (correctness, difficulty mult, format, timeout).
         reward = compute_total_reward(
             tests_passed=tests_passed,
             total_tests=total_tests,
@@ -123,6 +165,10 @@ class AutoExaminerEnvironment(Environment):
         )
         self._reward_history.append(reward)
 
+        # Difficulty escalation rule:
+        #   ≥ 0.8 → bump up (cap 5), pick that level's topic
+        #   < 0.5 → drop down (floor 1), pick that level's topic
+        #   else  → hold steady, keep same topic
         if score >= 0.8:
             new_difficulty = min(5, self._difficulty + 1)
             new_topic = TOPICS[new_difficulty - 1]
@@ -131,13 +177,15 @@ class AutoExaminerEnvironment(Environment):
             new_topic = TOPICS[new_difficulty - 1]
         else:
             new_difficulty = self._difficulty
-            new_topic = self._topic  # keep same topic, difficulty unchanged
+            new_topic = self._topic
 
         self._difficulty = new_difficulty
         self._topic = new_topic
 
+        # Episode ends after 5 steps (max episode length) or on a perfect score.
         done = self._step_count >= 5 or score == 1.0
 
+        # Compose human-readable feedback string for the client UI.
         parts = [f"Score: {score:.2f} ({tests_passed}/{total_tests} tests passed)."]
         if timed_out:
             parts.append("Solution timed out.")
@@ -160,6 +208,7 @@ class AutoExaminerEnvironment(Environment):
 
     @property
     def state(self) -> AutoExaminerState:
+        """Snapshot of the env's running state — exposed by /state endpoint."""
         avg = (
             sum(self._reward_history) / len(self._reward_history)
             if self._reward_history
