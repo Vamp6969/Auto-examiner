@@ -83,7 +83,7 @@ Nothing fancy in the stack. We picked tools that get out of the way:
 - **Pydantic** — typed Action / Observation / State models
 - **Docker** — packaged for Hugging Face Spaces
 - **OpenAI client** — LLM calls go through HuggingFace's featherless-ai router
-- **Vanilla HTML / CSS / JS** — the live dashboard. No framework, no build step, persistent session logs in localStorage
+- **Vanilla HTML / CSS / JS** — the live dashboard. No framework, no build step, persistent session logs in localStorage. Served by the same FastAPI process as the OpenEnv API, so one container ships everything.
 
 The dashboard is its own thing — a cyberpunk-styled live view that drives the deployed environment in real time. Watching the difficulty path light up from 1 to 5 while the reward bars climb is genuinely fun, and it made debugging a lot less painful.
 
