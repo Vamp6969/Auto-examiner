@@ -17,11 +17,13 @@ A self-improving reinforcement-learning environment built on [OpenEnv](https://g
 
 ## Highlights
 
+- **Zero-install demo** — the live HF Space serves both the OpenEnv backend AND the dashboard UI on the same URL. Visit, paste your HF token, click START.
 - **Self-improving curriculum** — difficulty adapts to performance every step (≥0.8 → up, <0.5 → down)
 - **LLM agent loop** — the model generates challenges *and* solutions; the env auto-generates 5 pytest assertions and runs each in a sandboxed subprocess
-- **Live web dashboard** (`index.html`) — typewriter challenge, syntax-highlighted solution, animated test results, color-tiered reward chart, session-persistent terminal log, and difficulty path indicator
+- **Live web dashboard** — typewriter challenge, syntax-highlighted solution, animated test results, color-tiered reward chart, session-persistent terminal log, themed token modal, and difficulty path indicator
 - **Multi-session log archive** — last 10 sessions persisted in `localStorage`, switchable, individually downloadable, deletable
-- **Deployed end-to-end** — FastAPI server + Docker image + HuggingFace Space + GitHub repo
+- **Deployed end-to-end** — single FastAPI app serves API + UI, packaged in one Docker image on HuggingFace Space
+- **Heavily commented codebase** — every JS module and Python file carries module-level docstrings and inline rationale
 
 ---
 
@@ -119,14 +121,15 @@ The dashboard mirrors this client-side and passes the new difficulty to `/reset`
 
 ## The Web Dashboard
 
-A vanilla-JS, no-framework single-page app at the project root that drives the live HF Space.
+A vanilla-JS, no-framework single-page app served **directly by the FastAPI server** — visiting the HF Space loads the live UI without any local setup. The same `server/app.py` exposes both the OpenEnv API endpoints (`/reset`, `/step`, `/health`, `/schema`, `/ws`) AND the dashboard assets (`/`, `/index.html`, `/styles.css`, `/app.js`, `/logger.js`, `/api.js`, `/chart.js`).
 
 ![Dashboard in action](running-example.png)
 
 ### Features
 
 - **Cyberpunk visual style** — Orbitron + JetBrains Mono fonts, animated grid + scanline overlay, glowing cyan/purple/magenta gradients on a deep blue background
-- **Top bar** — `AUTO-EXAMINER` title with live difficulty number, episode counter, average reward
+- **Top bar** — `AUTO-EXAMINER` title with live difficulty number, episode counter, average reward, and a **TOPIC pill** showing the current curriculum slot
+- **Themed HF token modal** — first-run authorization overlay matched to the cyberpunk theme (no native browser prompt). Token persists in `localStorage` once entered.
 - **Challenge panel** — typewriter animation (10 ms / char) with topic chip and live status pill
 - **Solution panel** — Prism.js syntax highlighting (Python), line count
 - **Test results panel** — green ✓ / red ✗ items animate in one-by-one
@@ -136,8 +139,9 @@ A vanilla-JS, no-framework single-page app at the project root that drives the l
   - Bars scaled by reward (max = 2.0 → 100%); negatives extend below the zero line
   - Color tiers: bright green (≥1.5), cyan (1.0–1.5), yellow (0.5–1.0), red (<0.5), magenta (negative)
   - Inline white reward value on each bar
-  - Hover tooltip: episode #, difficulty, score, reward, **challenge text**
+  - Hover tooltip: topic pill, episode #, difficulty, score, reward, and the **truncated challenge text**
 - **START / STOP** buttons — runs episodes in a loop with 3 s spacing
+- **Cyberpunk-themed scrollbars** — cyan→purple gradient with neon glow, applied globally
 - **Persistent session log** (slide-over drawer)
   - **localStorage-backed** — last 10 sessions retained across page reloads
   - Auto-generated session IDs: `session_YYYY-MM-DD_HH-mm-ss`
@@ -178,9 +182,19 @@ Fonts: **Orbitron** (titles, stats, buttons), **JetBrains Mono** (body, code, lo
 
 ---
 
-## Setup
+## Quick Start (no install)
 
-**Requirements:** Python 3.11+, a HuggingFace token (or any OpenAI-compatible API key).
+1. Open the live HF Space: **[huggingface.co/spaces/Vamppog/Auto-examiner](https://huggingface.co/spaces/Vamppog/Auto-examiner)**
+2. Paste your HuggingFace token (`hf_...`) into the themed authorization modal that appears on first load — get one at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens). The token is saved to your browser's `localStorage` and never leaves your machine.
+3. Click **▶ START**. The agent will start writing + solving challenges; the dashboard streams every step live.
+
+That's it — no clone, no Docker, no Python required.
+
+---
+
+## Local Setup (for hacking)
+
+**Requirements:** Python 3.11+, a HuggingFace or OpenAI-compatible API key.
 
 ```bash
 pip install openenv-core openai fastapi uvicorn
@@ -188,7 +202,7 @@ pip install openenv-core openai fastapi uvicorn
 uv sync
 ```
 
-**Environment variables:**
+**Environment variables (only needed for `inference.py` / the env's own LLM calls):**
 
 ```bash
 export HF_TOKEN="hf_..."
@@ -199,20 +213,14 @@ export ENV_BASE_URL="http://localhost:7860"
 
 ---
 
-## Running
+## Running Locally
 
-**Start the server:**
+**Start the server (serves both the API and the dashboard):**
 ```bash
 uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-**Open the dashboard:**
-```bash
-python3 -m http.server 8000
-# visit http://localhost:8000/
-```
-
-(The dashboard hits the deployed HF Space by default; edit `HF_BASE` in `app.js` to point at your local server.)
+Then visit **http://localhost:7860/** in a browser — the dashboard loads and uses the same-origin API automatically (`HF_BASE` in `app.js` defaults to `''`).
 
 **Run the 3-episode CLI baseline:**
 ```bash
@@ -265,7 +273,9 @@ docker run -p 7860:7860 \
   auto-examiner
 ```
 
-The root `Dockerfile` is what HuggingFace Spaces uses; `server/Dockerfile` is a mirror for backend-only deployments.
+Then visit **http://localhost:7860/** for the dashboard.
+
+The image bundles **both the API and the UI** — the same `server/app.py` registers the OpenEnv routes and the static-file routes, so one container ships everything. The root `Dockerfile` is what HuggingFace Spaces uses; `server/Dockerfile` is a mirror for backend-only deployments.
 
 ---
 
@@ -287,23 +297,28 @@ auto-examiner/
 ├── pyproject.toml
 ├── uv.lock
 └── server/
-    ├── app.py             FastAPI entrypoint via create_fastapi_app
+    ├── app.py             FastAPI entrypoint — wires OpenEnv routes + serves dashboard assets
     ├── environment.py     AutoExaminerEnvironment — reset / step / state
     ├── rewards.py         4 independent reward functions
     ├── test_generator.py  LLM test generator with hardcoded fallback
     └── Dockerfile         Mirror of root Dockerfile
 ```
 
+Every JS / Python source file carries a module-level docstring or comment block explaining its purpose, plus inline comments around any non-obvious decisions (subprocess sandboxing, fence-stripping, client-side reward override, persistence layout, etc.).
+
 ---
 
-## API Endpoints
+## API + Dashboard Endpoints
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/health` | Health check |
-| `GET` | `/schema` | Action / observation / state JSON schemas |
-| `POST` | `/reset` | Start a new episode (accepts optional `difficulty`) |
-| `POST` | `/step` | Submit a challenge + solution, get scored |
+| `GET`  | `/`            | Dashboard UI (serves `index.html`) |
+| `GET`  | `/styles.css` · `/app.js` · `/logger.js` · `/api.js` · `/chart.js` | Dashboard assets |
+| `GET`  | `/health`      | Health check |
+| `GET`  | `/schema`      | Action / observation / state JSON schemas |
+| `POST` | `/reset`       | Start a new episode (accepts optional `difficulty`) |
+| `POST` | `/step`        | Submit a challenge + solution, get scored |
+| `WS`   | `/ws`          | OpenEnv session protocol |
 
 ---
 
