@@ -12,7 +12,11 @@
 // ===========================================================================
 
 // ============== CONFIG ==============
-const HF_BASE = 'https://vamppog-auto-examiner.hf.space';                              // Deployed OpenEnv server
+// Empty string = same-origin: when this dashboard is served by the OpenEnv
+// FastAPI app itself (e.g. from the HF Space), all /reset, /step, etc.
+// hit the same host. To point at a remote backend, set this to a full URL
+// like "https://vamppog-auto-examiner.hf.space".
+const HF_BASE = '';
 const LLM_BASE = 'https://router.huggingface.co/featherless-ai/v1/chat/completions';   // OpenAI-compatible LLM endpoint via HF router
 const LLM_MODEL = 'Qwen/Qwen2.5-72B-Instruct';                                         // Agent model
 const TYPEWRITER_MS = 10;        // ms between characters when streaming the challenge text
